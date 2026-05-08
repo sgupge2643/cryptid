@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRYPTID — マルチプレイヤー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080c10;--surface:#0e1318;--surface2:#141b22;--surface3:#1a2230;
+  --border:#1e2d3d;--border2:#2a3f55;
+  --text:#dde6f0;--text2:#7a94aa;--text3:#3a5060;
+  --gold:#d4a820;--gold2:#f0c840;--gold-dim:#6a5010;
+  --desert:#c49a3c;--forest:#2d6a2d;--water:#1e5a94;--mountain:#5a5a70;--swamp:#800080;
+  --p0:#e05252;--p1:#52ade0;--p2:#52c27a;--p3:#e0b452;--p4:#b452e0;
+  --radius:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Crimson Text',serif;font-size:16px}
+
+/* ── Screens ── */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ── Header ── */
+.site-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);letter-spacing:5px;text-shadow:0 0 30px rgba(212,168,32,0.3)}
+.logo span{font-size:0.7rem;color:var(--text2);display:block;letter-spacing:2px;margin-top:-2px}
+
+/* ── Lobby ── */
+#lobby{align-items:center;justify-content:center;padding:40px 20px}
+.lobby-box{width:100%;max-width:480px}
+.lobby-title{text-align:center;margin-bottom:32px}
+.lobby-title h1{font-family:'Cinzel',serif;font-size:2.6rem;color:var(--gold);letter-spacing:6px;text-shadow:0 0 40px rgba(212,168,32,0.4)}
+.lobby-title p{color:var(--text2);margin-top:8px;font-size:1rem;letter-spacing:1px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.card h3{font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);letter-spacing:2px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.82rem;color:var(--text2);margin-bottom:5px;letter-spacing:0.5px}
+.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:8px 12px;font-size:0.95rem;font-family:'Crimson Text',serif;transition:border-color 0.15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--gold-dim)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 24px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:1.5px;transition:all 0.15s;white-space:nowrap}
+.btn:hover{background:var(--surface3);border-color:var(--gold-dim);color:var(--gold)}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-gold{background:rgba(212,168,32,0.12);border-color:var(--gold-dim);color:var(--gold)}
+.btn-gold:hover{background:rgba(212,168,32,0.22);border-color:var(--gold)}
+.btn-green{background:rgba(60,160,60,0.15);border-color:rgba(60,160,60,0.4);color:#70d070}
+.btn-green:hover{background:rgba(60,160,60,0.25);border-color:rgba(60,160,60,0.7)}
+.btn-red{background:rgba(180,50,50,0.15);border-color:rgba(180,50,50,0.4);color:#d07070}
+.btn-red:hover{background:rgba(180,50,50,0.25)}
+.btn-full{width:100%;margin-top:6px}
+.btn-sm{padding:6px 14px;font-size:0.72rem}
+
+.divider{text-align:center;color:var(--text3);font-size:0.8rem;margin:16px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.divider::before{left:0}.divider::after{right:0}
+
+/* ── Waiting Room ── */
+#waiting{align-items:center;justify-content:center;padding:40px 20px}
+.waiting-box{width:100%;max-width:520px}
+.room-code-display{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:16px 20px;text-align:center;margin-bottom:20px}
+.room-code-display .label{font-size:0.78rem;color:var(--text2);letter-spacing:1px;margin-bottom:6px}
+.room-code-display .code{font-family:'Cinzel',serif;font-size:2.2rem;color:var(--gold);letter-spacing:8px;text-shadow:0 0 20px rgba(212,168,32,0.3)}
+.room-code-display .hint{font-size:0.75rem;color:var(--text3);margin-top:4px}
+
+.player-waiting-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.player-waiting-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px}
+.pw-dot{width:12px;height:12px;border-radius:50%}
+.pw-name{flex:1;font-size:0.95rem}
+.pw-badge{font-size:0.72rem;padding:2px 8px;border-radius:4px}
+.pw-badge.host{background:rgba(212,168,32,0.2);color:var(--gold)}
+.pw-badge.ready{background:rgba(60,160,60,0.2);color:#70d070}
+
+.waiting-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+
+/* ── Game ── */
+#game{flex-direction:row;height:100vh;overflow:hidden}
+.game-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.game-sidebar{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+
+.map-wrap{flex:1;overflow:hidden;position:relative;background:var(--bg)}
+#hex-canvas{display:block;width:100%;height:100%}
+
+.bottom-bar{background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:56px}
+.turn-info{flex:1;min-width:0}
+.turn-player{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--gold);letter-spacing:1px}
+.turn-desc{font-size:0.82rem;color:var(--text2);margin-top:1px}
+.action-btns{display:flex;gap:6px;flex-wrap:wrap}
+
+.sidebar-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sidebar-section h4{font-family:'Cinzel',serif;font-size:0.72rem;color:var(--gold);letter-spacing:2px;margin-bottom:8px}
+
+.player-sidebar-list{display:flex;flex-direction:column;gap:5px}
+.psi{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:5px;border:1px solid transparent;font-size:0.88rem}
+.psi.active-turn{border-color:var(--gold-dim);background:rgba(212,168,32,0.06)}
+.psi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.psi-name{flex:1}
+.psi-you{font-size:0.68rem;padding:1px 6px;border-radius:3px;background:rgba(212,168,32,0.15);color:var(--gold)}
+
+.clue-card{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;font-size:0.88rem;line-height:1.5;position:relative}
+.clue-toggle{position:absolute;top:6px;right:8px;font-size:0.7rem;color:var(--text2);cursor:pointer;padding:2px 6px;border-radius:3px;background:var(--surface3)}
+.clue-toggle:hover{color:var(--gold)}
+.clue-blurred{filter:blur(5px);user-select:none}
+
+.game-log{flex:1;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column-reverse;gap:3px}
+.log-line{font-size:0.78rem;color:var(--text2);line-height:1.5;border-bottom:1px solid var(--surface2);padding-bottom:3px}
+.log-line .lp{font-weight:600}
+.log-line.system{color:var(--text3);font-style:italic}
+
+/* ── Modals ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:24px;width:90%;max-width:440px}
+.modal h2{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);margin-bottom:10px;letter-spacing:1px}
+.modal p{color:var(--text2);font-size:0.9rem;line-height:1.6;margin-bottom:8px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+
+.q-player-list{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.qp-btn{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text);font-size:0.9rem;width:100%;text-align:left;transition:all 0.15s;font-family:'Crimson Text',serif}
+.qp-btn:hover{border-color:var(--gold-dim);background:var(--surface3);color:var(--gold)}
+.qp-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+
+/* ── Win screen ── */
+#win-screen{align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+.win-box{max-width:560px;width:100%}
+.win-box h1{font-family:'Cinzel',serif;font-size:2.4rem;color:var(--gold);letter-spacing:4px;text-shadow:0 0 40px rgba(212,168,32,0.5);margin-bottom:8px}
+.win-box .win-sub{font-size:1.15rem;color:var(--text2);margin-bottom:24px}
+.clue-reveal{display:flex;flex-direction:column;gap:8px;margin:20px 0;text-align:left}
+.clue-reveal-item{background:var(--surface);border-radius:6px;padding:10px 14px;border-left:3px solid var(--border)}
+.cri-name{font-size:0.78rem;font-weight:600;margin-bottom:3px}
+.cri-text{font-size:0.9rem;color:var(--text2)}
+
+/* ── Tooltip ── */
+#tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:5px 9px;font-size:0.75rem;pointer-events:none;z-index:100;display:none;max-width:220px;line-height:1.4}
+
+/* ── Status ── */
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.status-dot.online{background:#52c27a}
+.status-dot.offline{background:#888}
+
+.notice{padding:8px 12px;border-radius:5px;font-size:0.82rem;margin-bottom:10px}
+.notice.info{background:rgba(52,130,200,0.15);border:1px solid rgba(52,130,200,0.3);color:#80b8e8}
+.notice.warn{background:rgba(200,160,40,0.15);border:1px solid rgba(200,160,40,0.3);color:#d4b840}
+.notice.error{background:rgba(200,60,60,0.15);border:1px solid rgba(200,60,60,0.3);color:#e08080}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.terrain-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tl-item{display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text2)}
+.tl-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+.search-banner{background:rgba(212,168,32,0.1);border:1px solid rgba(212,168,32,0.25);border-radius:5px;padding:7px 12px;font-size:0.82rem;color:var(--gold);margin-top:6px;display:none}
+
+.phase-tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:4px;font-size:0.72rem;background:var(--surface3);color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- ── LOBBY ── -->
+<div id="lobby" class="screen active">
+  <div class="lobby-box">
+    <div class="lobby-title">
+      <h1>CRYPTID</h1>
+      <p>クリプティドを最初に発見した者が勝利する</p>
+    </div>
+
+    <div id="lobby-notice"></div>
+
+    <div class="card">
+      <h3>プレイヤー名</h3>
+      <div class="field">
+        <label>あなたの名前</label>
+        <input id="player-name" type="text" placeholder="名前を入力" maxlength="16" value="プレイヤー">
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>新しいロビーを作成</h3>
+      <div class="field">
+        <label>プレイヤー数</label>
+        <select id="create-player-count">
+          <option value="3">3人</option>
+          <option value="4" selected>4人</option>
+          <option value="5">5人</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>モード</label>
+        <select id="create-mode">
+          <option value="normal">ノーマル（推奨）</option>
+          <option value="advanced">アドバンスド</option>
+        </select>
+      </div>
+      <button class="btn btn-gold btn-full" id="create-btn">ロビーを作成</button>
+    </div>
+
+    <div class="divider">または</div>
+
+    <div class="card">
+      <h3>ロビーに参加</h3>
+      <div class="field">
+        <label>ルームコード（4文字）</label>
+        <input id="join-code" type="text" placeholder="ABCD" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-family:'Cinzel',serif;font-size:1.2rem;text-align:center">
+      </div>
+      <button class="btn btn-full" id="join-btn">参加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── WAITING ROOM ── -->
+<div id="waiting" class="screen">
+  <div class="waiting-box">
+    <div class="site-header" style="margin-bottom:20px;border-radius:var(--radius)">
+      <span class="logo">CRYPTID <span>ウェイティングルーム</span></span>
+      <button class="btn btn-sm btn-red" id="leave-btn">退出</button>
+    </div>
+
+    <div id="wait-notice"></div>
+
+    <div class="room-code-display">
+      <div class="label">ルームコード</div>
+      <div class="code" id="room-code-display">----</div>
+      <div class="hint">他のプレイヤーにこのコードを共有してください</div>
+    </div>
+
+    <div class="card">
+      <h3>プレイヤー (<span id="wait-count">0</span>/<span id="wait-max">4</span>)</h3>
+      <div class="player-waiting-list" id="waiting-player-list"></div>
+    </div>
+
+    <div class="card" id="host-settings" style="display:none">
+      <h3>ゲーム設定（ホストのみ）</h3>
+      <div class="waiting-settings">
+        <div class="field">
+          <label>プレイヤー数</label>
+          <select id="wait-player-count">
+            <option value="3">3人</option>
+            <option value="4" selected>4人</option>
+            <option value="5">5人</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>モード</label>
+          <select id="wait-mode">
+            <option value="normal">ノーマル</option>
+            <option value="advanced">アドバンスド</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-green btn-full" id="start-btn" disabled>ゲーム開始</button>
+      <div id="start-hint" style="font-size:0.78rem;color:var(--text3);margin-top:6px;text-align:center"></div>
+    </div>
+    <div id="guest-waiting-msg" class="notice info" style="display:none">ホストがゲームを開始するまでお待ちください...</div>
+  </div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="game" class="screen">
+  <div class="game-main">
+    <div class="map-wrap">
+      <canvas id="hex-canvas"></canvas>
+    </div>
+    <div class="bottom-bar">
+      <div class="turn-info">
+        <div class="turn-player" id="turn-player-name">—</div>
+        <div class="turn-desc" id="turn-desc">—</div>
+        <div class="search-banner" id="search-banner"></div>
+      </div>
+      <div class="action-btns" id="action-btns"></div>
+    </div>
+  </div>
+
+  <div class="game-sidebar">
+    <div class="sidebar-section">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="logo" style="font-size:1rem;letter-spacing:3px">CRYPTID</span>
+        <span class="phase-tag" id="phase-tag">—</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <span><span class="status-dot online"></span><span style="font-size:0.75rem;color:var(--text2)" id="conn-count">接続中...</span></span>
+        <span style="font-size:0.75rem;color:var(--text3)" id="room-code-game"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>プレイヤー</h4>
+      <div class="player-sidebar-list" id="game-player-list"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>あなたのクリュー</h4>
+      <div class="clue-card" id="my-clue-card">
+        <span class="clue-toggle" id="clue-toggle-btn" onclick="toggleClue()">非表示</span>
+        <span id="my-clue-text">—</span>
+      </div>
+      <div class="terrain-legend">
+        <div class="tl-item"><div class="tl-swatch" style="background:#c49a3c"></div>砂漠</div>
+        <div class="tl-item"><div class="tl-swatch" style="background:#2d6a2d"></div>森林</div>
+        <div class="tl-item"><div class="tl-swatch" style="background:#1e5a94"></div>水辺</div>
+        <div class="tl-item"><div class="tl-swatch" style="background:#5a5a70"></div>山岳</div>
+        <div class="tl-item"><div class="tl-swatch" style="background:#800080"></div>湿地</div>
+      </div>
+      <div class="terrain-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div class="tl-item"><div class="tl-swatch" style="background:rgba(190,120,40,0.45);border:1.5px solid rgba(220,150,60,0.85)"></div>🐻 クマ</div>
+        <div class="tl-item"><div class="tl-swatch" style="background:rgba(190,60,60,0.45);border:1.5px solid rgba(210,80,80,0.85)"></div>🐱 ピューマ</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;border-bottom:none">
+      <h4>ゲームログ</h4>
+      <div class="game-log" id="game-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WIN ── -->
+<div id="win-screen" class="screen">
+  <div class="win-box">
+    <h1>DISCOVERED</h1>
+    <div class="win-sub" id="win-msg">—</div>
+    <div class="clue-reveal" id="clue-reveal"></div>
+    <button class="btn btn-gold" onclick="goLobby()" style="margin-top:10px">ロビーに戻る</button>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-bg" id="modal-bg" style="display:none">
+  <div class="modal" id="modal-inner"></div>
+</div>
+<div id="tooltip"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, push, off, remove, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAahCYq1b8s5MO9ov6hYJGtdcOe8UAh6DY",
+  authDomain: "cryptid-game-4a393.firebaseapp.com",
+  databaseURL: "https://cryptid-game-4a393-default-rtdb.firebaseio.com",
+  projectId: "cryptid-game-4a393",
+  storageBucket: "cryptid-game-4a393.firebasestorage.app",
+  messagingSenderId: "555548191365",
+  appId: "1:555548191365:web:0c2e8c4bc1e45e7a7e17ec"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ─── Constants ───
+const COLS=12, ROWS=8, HEX_R=30;
+const HEX_H = Math.sqrt(3)*HEX_R;
+const TERRAIN=['desert','forest','water','mountain','swamp'];
+const TERRAIN_JP=['砂漠','森林','水辺','山岳','湿地'];
+const TERRAIN_COLORS={desert:'#c49a3c',forest:'#2d6a2d',water:'#1e5a94',mountain:'#5a5a70',swamp:'#800080'};
+const PLAYER_COLORS=['#e05252','#52ade0','#52c27a','#e0b452','#b452e0'];
+const STRUCT_COLORS_HEX={white:'#d8d8d8',green:'#3a8a3a',blue:'#3a6a9a',black:'#484848'};
+const STRUCT_COLORS_JP={white:'白',green:'緑',blue:'青',black:'黒'};
+
+// ─── State ───
+let myPlayerId = null;
+let myName = '';
+let roomCode = null;
+let roomRef = null;
+let roomUnsub = null;
+let localState = null; // full room snapshot
+let isHost = false;
+let myPlayerIndex = -1; // index in players array
+let clueBlurred = false;
+let hoveredHex = null;
+let actionMode = null; // 'question'|'search'|null
+let canvas, ctx, canvasW, canvasH;
+
+// ─── Utils ───
+function randId(n=8){ return Math.random().toString(36).slice(2,2+n).toUpperCase(); }
+function roomCodeGen(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
+function getHexKey(c,r){ return `${c}_${r}`; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function setNotice(elId, msg, type='info'){ const el=document.getElementById(elId); if(!msg){el.innerHTML='';return;} el.innerHTML=`<div class="notice ${type}">${msg}</div>`; }
+
+function showModal(html){ document.getElementById('modal-inner').innerHTML=html; document.getElementById('modal-bg').style.display='flex'; }
+function closeModal(){ document.getElementById('modal-bg').style.display='none'; }
+window.closeModal = closeModal;
+
+// ─── Hex geometry ───
+function hexToPixel(col,row){
+  const x = HEX_R*1.5*col + HEX_R + 14;
+  const y = HEX_H*row + (col%2===1?HEX_H/2:0) + HEX_H/2 + 10;
+  return {x,y};
+}
+function hexCorners(cx,cy,r){
+  let pts=[];
+  for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+  return pts;
+}
+function pixelToHex(px,py){
+  let best=null,bestD=Infinity;
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    const {x,y}=hexToPixel(c,r);const d=(px-x)**2+(py-y)**2;
+    if(d<bestD){bestD=d;best={col:c,row:r};}
+  }
+  return bestD<(HEX_R*1.3)**2?best:null;
+}
+function hexDist(c1,r1,c2,r2){
+  const toC=(col,row)=>{const x=col,z=row-(col-(col&1))/2;return{x,y:-x-z,z};};
+  const a=toC(c1,r1),b=toC(c2,r2);
+  return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y),Math.abs(a.z-b.z));
+}
+function getNeighbors(col,row,dist){
+  let res=[];
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++) if(hexDist(col,row,c,r)<=dist) res.push({col:c,row:r});
+  return res;
+}
+
+// ─── Map generation (deterministic from seed) ───
+function seededRng(seed){
+  let s=seed;
+  return function(){s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/4294967296;};
+}
+function generateMap(seed){
+  const rng=seededRng(seed);
+  const map=[];
+  for(let c=0;c<COLS;c++){map[c]=[];for(let r=0;r<ROWS;r++) map[c][r]={terrain:null,animal:null,structure:null,structColor:null};}
+  // terrain
+  const terrainW=[0.22,0.25,0.20,0.18,0.15];
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    let v=rng(),cum=0,t='forest';
+    for(let i=0;i<5;i++){cum+=terrainW[i];if(v<cum){t=TERRAIN[i];break;}}
+    map[c][r].terrain=t;
+  }
+  // smooth
+  const copy=()=>map.map(col=>col.map(cell=>({...cell})));
+  for(let pass=0;pass<4;pass++){
+    const snap=copy();
+    for(let c=1;c<COLS-1;c++)for(let r=1;r<ROWS-1;r++){
+      if(rng()<0.4){
+        const nb=getNeighbors(c,r,1).filter(h=>h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS);
+        const cnt={};for(const h of nb){const t=snap[h.col][h.row].terrain;cnt[t]=(cnt[t]||0)+1;}
+        map[c][r].terrain=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+      }
+    }
+  }
+  // animals
+  function flood(sc,sr,animal,count){
+    const front=[{col:sc,row:sr}],vis=new Set([getHexKey(sc,sr)]);let n=0;
+    while(front.length&&n<count){
+      const i=Math.floor(rng()*front.length),h=front.splice(i,1)[0];
+      if(h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS){
+        map[h.col][h.row].animal=animal;n++;
+        for(const nb of getNeighbors(h.col,h.row,1)){
+          const k=getHexKey(nb.col,nb.row);
+          if(!vis.has(k)&&nb.col>=0&&nb.col<COLS&&nb.row>=0&&nb.row<ROWS){vis.add(k);front.push(nb);}
+        }
+      }
+    }
+  }
+  flood(Math.floor(rng()*COLS),Math.floor(rng()*ROWS),'bear',14+Math.floor(rng()*8));
+  flood(Math.floor(rng()*COLS),Math.floor(rng()*ROWS),'cougar',14+Math.floor(rng()*8));
+  // structures
+  const STRUCT_TYPES=['stone','shack'];
+  const STRUCT_COLS_LIST=['white','green','blue','black'];
+  for(const type of STRUCT_TYPES){
+    for(const color of STRUCT_COLS_LIST){
+      let tries=0;
+      while(tries<200){
+        const sc=Math.floor(rng()*COLS),sr=Math.floor(rng()*ROWS);
+        if(!map[sc][sr].structure){map[sc][sr].structure=type;map[sc][sr].structColor=color;break;}
+        tries++;
+      }
+    }
+  }
+  return map;
+}
+
+// ─── Clue logic ───
+function clueMatchesHex(clue,map,col,row){
+  if(col<0||col>=COLS||row<0||row>=ROWS)return false;
+  const cell=map[col][row];
+  switch(clue.type){
+    case'terrain_one':return cell.terrain===clue.p[0];
+    case'terrain_two':return cell.terrain===clue.p[0]||cell.terrain===clue.p[1];
+    case'within1_terrain':{const nb=getNeighbors(col,row,1);return nb.some(h=>h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS&&map[h.col][h.row].terrain===clue.p[0]);}
+    case'within2_terrain':{const nb=getNeighbors(col,row,2);return nb.some(h=>h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS&&map[h.col][h.row].terrain===clue.p[0]);}
+    case'animal':return cell.animal===clue.p[0];
+    case'within1_struct':{const nb=getNeighbors(col,row,1);return nb.some(h=>h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS&&map[h.col][h.row].structure===clue.p[0]);}
+    case'within2_struct_color':{const nb=getNeighbors(col,row,2);return nb.some(h=>h.col>=0&&h.col<COLS&&h.row>=0&&h.row<ROWS&&map[h.col][h.row].structure===clue.p[0]&&map[h.col][h.row].structColor===clue.p[1]);}
+    case'not_terrain':return cell.terrain!==clue.p[0];
+    case'not_animal':return cell.animal!==clue.p[0];
+    default:return false;
+  }
+}
+function clueDesc(clue){
+  const tj=i=>TERRAIN_JP[TERRAIN.indexOf(i)];
+  const aj=a=>a==='bear'?'クマ':'ピューマ';
+  const sj=s=>s==='stone'?'立石':'廃屋';
+  switch(clue.type){
+    case'terrain_one':return`生息地は${tj(clue.p[0])}にある`;
+    case'terrain_two':return`生息地は${tj(clue.p[0])}か${tj(clue.p[1])}にある`;
+    case'within1_terrain':return`生息地は${tj(clue.p[0])}から1マス以内にある`;
+    case'within2_terrain':return`生息地は${tj(clue.p[0])}から2マス以内にある`;
+    case'animal':return`生息地は${aj(clue.p[0])}のテリトリーにある`;
+    case'within1_struct':return`生息地は${sj(clue.p[0])}から1マス以内にある`;
+    case'within2_struct_color':{const cn=STRUCT_COLORS_JP[clue.p[1]];return`生息地は${cn}${sj(clue.p[0])}から2マス以内にある`;}
+    case'not_terrain':return`生息地は${tj(clue.p[0])}にない`;
+    case'not_animal':return`生息地は${aj(clue.p[0])}のテリトリーにない`;
+    default:return'不明なクリュー';
+  }
+}
+function generateClue(map,hc,hr,advanced){
+  const cell=map[hc][hr];
+  const opts=[];
+  opts.push({type:'terrain_one',p:[cell.terrain]});
+  const other=TERRAIN.filter(t=>t!==cell.terrain);
+  opts.push({type:'terrain_two',p:[cell.terrain,other[Math.floor(Math.random()*other.length)]]});
+  const nb1=getNeighbors(hc,hr,1),nb2=getNeighbors(hc,hr,2);
+  const t1=new Set(nb1.map(h=>map[h.col]?.[h.row]?.terrain).filter(Boolean));
+  const t2=new Set(nb2.map(h=>map[h.col]?.[h.row]?.terrain).filter(Boolean));
+  for(const t of t1) opts.push({type:'within1_terrain',p:[t]});
+  for(const t of t2) if(!t1.has(t)) opts.push({type:'within2_terrain',p:[t]});
+  if(cell.animal) opts.push({type:'animal',p:[cell.animal]});
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    const mc=map[c][r];if(!mc.structure)continue;
+    const d=hexDist(hc,hr,c,r);
+    if(d<=1) opts.push({type:'within1_struct',p:[mc.structure]});
+    if(d<=2) opts.push({type:'within2_struct_color',p:[mc.structure,mc.structColor]});
+  }
+  if(advanced){
+    const nt=TERRAIN.filter(t=>t!==cell.terrain);
+    if(nt.length) opts.push({type:'not_terrain',p:[nt[Math.floor(Math.random()*nt.length)]]});
+    if(!cell.animal){opts.push({type:'not_animal',p:['bear']});opts.push({type:'not_animal',p:['cougar']});}
+  }
+  return opts[Math.floor(Math.random()*opts.length)];
+}
+function findUnique(map,clues){
+  const cands=[];
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)
+    if(clues.every(cl=>clueMatchesHex(cl,map,c,r)))cands.push({col:c,row:r});
+  return cands;
+}
+function buildGame(playerCount,advanced,seed){
+  const map=generateMap(seed);
+  let clues,habitat,tries=0;
+  while(tries<300){
+    tries++;
+    const hc=Math.floor(Math.random()*COLS),hr=Math.floor(Math.random()*ROWS);
+    clues=[];
+    for(let i=0;i<playerCount;i++) clues.push(generateClue(map,hc,hr,advanced));
+    const cands=findUnique(map,clues);
+    if(cands.length===1&&cands[0].col===hc&&cands[0].row===hr){habitat={col:hc,row:hr};break;}
+  }
+  return{map,clues,habitat};
+}
+
+// ─── Firebase helpers ───
+function roomPath(code){ return `rooms/${code}`; }
+function subscribe(code){
+  if(roomUnsub){off(ref(db,roomPath(code)));roomUnsub=null;}
+  const r=ref(db,roomPath(code));
+  roomUnsub=onValue(r,snap=>{
+    const data=snap.val();
+    if(!data){goLobby();return;}
+    localState=data;
+    onRoomUpdate(data);
+  });
+  roomRef=r;
+}
+function unsubscribe(){
+  if(roomUnsub&&roomCode){off(ref(db,roomPath(roomCode)));roomUnsub=null;}
+}
+
+// ─── Lobby ───
+document.getElementById('create-btn').addEventListener('click',async()=>{
+  const name=document.getElementById('player-name').value.trim()||'プレイヤー1';
+  myName=name;
+  myPlayerId=randId(10);
+  const code=roomCodeGen();
+  const playerCount=parseInt(document.getElementById('create-player-count').value);
+  const mode=document.getElementById('create-mode').value;
+  const room={
+    code,host:myPlayerId,status:'waiting',
+    settings:{playerCount,mode},
+    players:{[myPlayerId]:{name,color:0,joinedAt:Date.now()}},
+    log:[],tokens:{},
+    createdAt:Date.now()
+  };
+  await set(ref(db,roomPath(code)),room);
+  roomCode=code;isHost=true;
+  subscribe(code);
+  showScreen('waiting');
+});
+
+document.getElementById('join-btn').addEventListener('click',async()=>{
+  const name=document.getElementById('player-name').value.trim()||'プレイヤー';
+  const code=document.getElementById('join-code').value.toUpperCase().trim();
+  if(code.length<4){setNotice('lobby-notice','4文字のルームコードを入力してください','warn');return;}
+  const snap=await get(ref(db,roomPath(code)));
+  if(!snap.exists()){setNotice('lobby-notice','ルームが見つかりません','error');return;}
+  const room=snap.val();
+  if(room.status!=='waiting'){setNotice('lobby-notice','ゲームはすでに開始されています','error');return;}
+  const existingCount=Object.keys(room.players||{}).length;
+  if(existingCount>=room.settings.playerCount){setNotice('lobby-notice','ロビーが満員です','error');return;}
+  myName=name;myPlayerId=randId(10);roomCode=code;isHost=false;
+  const colorIdx=existingCount;
+  await update(ref(db,`${roomPath(code)}/players`),{[myPlayerId]:{name,color:colorIdx,joinedAt:Date.now()}});
+  subscribe(code);
+  showScreen('waiting');
+});
+
+// ─── Waiting Room ───
+document.getElementById('leave-btn').addEventListener('click',async()=>{
+  if(roomCode&&myPlayerId){
+    await remove(ref(db,`${roomPath(roomCode)}/players/${myPlayerId}`));
+    if(isHost) await remove(ref(db,roomPath(roomCode)));
+  }
+  unsubscribe();roomCode=null;isHost=false;
+  showScreen('lobby');
+});
+
+document.getElementById('start-btn').addEventListener('click',async()=>{
+  const playerCount=parseInt(document.getElementById('wait-player-count').value);
+  const advanced=document.getElementById('wait-mode').value==='advanced';
+  const currentPlayers=Object.values(localState.players||{});
+  if(currentPlayers.length<2){setNotice('wait-notice','最低2人必要です','warn');return;}
+
+  const seed=Math.floor(Math.random()*2**31);
+  const {map,clues,habitat}=buildGame(playerCount,advanced,seed);
+
+  // assign player indices
+  const playerIds=Object.keys(localState.players||{}).sort((a,b)=>(localState.players[a].joinedAt||0)-(localState.players[b].joinedAt||0));
+  const playerOrder=playerIds.slice(0,playerCount);
+  const clueMap={};
+  playerOrder.forEach((pid,i)=>{ clueMap[pid]={...clues[i]}; });
+
+  const gameState={
+    status:'playing',
+    seed,
+    advanced,
+    playerOrder,
+    clues:clueMap,
+    habitat,
+    phase:'initial',
+    currentPlayerIdx:0,
+    initialCubesLeft:{},
+    tokens:{},
+    searchState:null,
+    questionState:null,
+    winner:null,
+    log:[]
+  };
+  playerOrder.forEach(pid=>{ gameState.initialCubesLeft[pid]=2; });
+  // store map separately (large)
+  await set(ref(db,`${roomPath(roomCode)}/gameState`),gameState);
+  await set(ref(db,`${roomPath(roomCode)}/mapData`),JSON.stringify(map));
+  await update(ref(db,roomPath(roomCode)),{status:'playing'});
+});
+
+// ─── Room Update Handler ───
+function onRoomUpdate(room){
+  if(room.status==='waiting') handleWaitingUpdate(room);
+  else if(room.status==='playing') handleGameUpdate(room);
+}
+
+function handleWaitingUpdate(room){
+  if(!document.getElementById('waiting').classList.contains('active'))showScreen('waiting');
+  document.getElementById('room-code-display').textContent=room.code||'----';
+  const players=room.players||{};
+  const count=Object.keys(players).length;
+  const maxP=room.settings?.playerCount||4;
+  document.getElementById('wait-count').textContent=count;
+  document.getElementById('wait-max').textContent=maxP;
+  const list=document.getElementById('waiting-player-list');
+  list.innerHTML='';
+  const sortedPids=Object.keys(players).sort((a,b)=>(players[a].joinedAt||0)-(players[b].joinedAt||0));
+  sortedPids.forEach(pid=>{
+    const p=players[pid];
+    const isMe=pid===myPlayerId;
+    const isHostP=pid===room.host;
+    const color=PLAYER_COLORS[p.color]||'#888';
+    const item=document.createElement('div');item.className='player-waiting-item';
+    item.innerHTML=`<div class="pw-dot" style="background:${color}"></div>
+      <span class="pw-name">${p.name}${isMe?' (あなた)':''}</span>
+      ${isHostP?'<span class="pw-badge host">ホスト</span>':''}`;
+    list.appendChild(item);
+  });
+  const myIsHost=room.host===myPlayerId;
+  document.getElementById('host-settings').style.display=myIsHost?'block':'none';
+  document.getElementById('guest-waiting-msg').style.display=myIsHost?'none':'block';
+  if(myIsHost){
+    const startBtn=document.getElementById('start-btn');
+    if(count>=2){startBtn.disabled=false;document.getElementById('start-hint').textContent='';}
+    else{startBtn.disabled=true;document.getElementById('start-hint').textContent='最低2人必要です';}
+  }
+}
+
+let mapCache=null;
+function handleGameUpdate(room){
+  if(!document.getElementById('game').classList.contains('active')){
+    showScreen('game');
+    initCanvas();
+    mapCache=null;
+  }
+  if(!room.gameState)return;
+  if(!mapCache&&room.mapData){
+    try{mapCache=JSON.parse(room.mapData);}catch(e){console.error(e);}
+  }
+  const gs=room.gameState;
+  const players=room.players||{};
+
+  // find my index
+  myPlayerIndex=(gs.playerOrder||[]).indexOf(myPlayerId);
+
+  // sidebar players
+  renderSidebarPlayers(gs,players);
+
+  // my clue
+  const myClue=gs.clues?.[myPlayerId];
+  if(myClue) document.getElementById('my-clue-text').textContent=clueDesc(myClue);
+
+  // room code
+  document.getElementById('room-code-game').textContent=`コード: ${room.code}`;
+  document.getElementById('conn-count').textContent=`${Object.keys(players).length}人接続中`;
+
+  // phase tag
+  document.getElementById('phase-tag').textContent=gs.phase==='initial'?'初期配置':gs.phase==='turn'?'ターン':gs.phase==='search'?'サーチ':gs.phase==='question_response'?'質問回答':'—';
+
+  // win check
+  if(gs.winner){
+    showWin(gs,players);return;
+  }
+
+  renderBottomBar(gs,players);
+  if(mapCache) renderMap(gs);
+  renderLog(gs.log||[],players);
+}
+
+function renderSidebarPlayers(gs,players){
+  const el=document.getElementById('game-player-list');
+  el.innerHTML='';
+  (gs.playerOrder||[]).forEach((pid,i)=>{
+    const p=players[pid]||{name:'?',color:i};
+    const isMe=pid===myPlayerId;
+    const isCurrent=i===gs.currentPlayerIdx;
+    const color=PLAYER_COLORS[p.color]||PLAYER_COLORS[i]||'#888';
+    const div=document.createElement('div');
+    div.className='psi'+(isCurrent?' active-turn':'');
+    div.innerHTML=`<div class="psi-dot" style="background:${color}"></div>
+      <span class="psi-name">${p.name}</span>
+      ${isMe?'<span class="psi-you">あなた</span>':''}
+      ${isCurrent?'<span style="font-size:0.7rem;color:var(--gold)">▶</span>':''}`;
+    el.appendChild(div);
+  });
+}
+
+function renderBottomBar(gs,players){
+  const currentPid=gs.playerOrder?.[gs.currentPlayerIdx];
+  const cp=players[currentPid]||{name:'?'};
+  const isMyTurn=currentPid===myPlayerId;
+  const iAmRespondingQ=gs.phase==='question_response'&&gs.questionState?.targetPlayer===myPlayerId;
+  const iAmRespondingS=gs.phase==='search'&&gs.searchState?.nextPlayerToAsk===myPlayerId;
+
+  document.getElementById('turn-player-name').textContent=cp.name+(isMyTurn?' (あなたのターン)':'のターン');
+  const banner=document.getElementById('search-banner');
+  banner.style.display='none';
+  const btns=document.getElementById('action-btns');
+  btns.innerHTML='';
+
+  if(gs.phase==='initial'){
+    const left=gs.initialCubesLeft?.[currentPid]||0;
+    document.getElementById('turn-desc').textContent=isMyTurn
+      ?`キューブを${left}個置いてください（生息地でないマスを選択）`
+      :`${cp.name}がキューブを配置中...`;
+    if(isMyTurn){
+      const b=mkBtn('マップをクリックして配置','','');b.disabled=true;btns.appendChild(b);
+    }
+  } else if(gs.phase==='turn'){
+    if(isMyTurn){
+      document.getElementById('turn-desc').textContent='アクションを選択';
+      const qb=mkBtn('質問する','green',()=>{ actionMode='question'; renderBottomBar(gs,players); });
+      const sb=mkBtn('サーチする','gold',()=>{ actionMode='search'; renderBottomBar(gs,players); });
+      btns.appendChild(qb);btns.appendChild(sb);
+      if(actionMode==='question') document.getElementById('turn-desc').textContent='質問するマスをマップ上でクリック';
+      if(actionMode==='search') document.getElementById('turn-desc').textContent='サーチするマスをクリック（自分のクリューで可能なマス）';
+    } else {
+      document.getElementById('turn-desc').textContent=`${cp.name}がアクションを選択中...`;
+    }
+  } else if(gs.phase==='question_response'){
+    const qs=gs.questionState;
+    const asker=players[qs?.askingPlayer]||{name:'?'};
+    const target=players[qs?.targetPlayer]||{name:'?'};
+    if(iAmRespondingQ){
+      document.getElementById('turn-desc').textContent=`${asker.name}が(${qs.col},${qs.row})について質問しています。あなたのクリューで回答：`;
+      const myClue=gs.clues?.[myPlayerId];
+      const canBe=myClue&&mapCache?clueMatchesHex(myClue,mapCache,qs.col,qs.row):false;
+      const yb=mkBtn('生息地かもしれない（ディスク）','green',()=>submitQuestionResponse(true,qs));
+      const nb=mkBtn('生息地でない（キューブ）','red',()=>submitQuestionResponse(false,qs));
+      // auto-respond based on clue
+      document.getElementById('turn-desc').textContent+=`（あなたのクリューでは: ${canBe?'可能':'不可能'}）`;
+      btns.appendChild(yb);btns.appendChild(nb);
+    } else {
+      document.getElementById('turn-desc').textContent=`${asker.name}が(${qs?.col},${qs?.row})について${target.name}に質問中...`;
+    }
+  } else if(gs.phase==='search'){
+    const ss=gs.searchState;
+    banner.style.display='block';
+    banner.textContent=`サーチ中: マス(${ss?.col},${ss?.row})`;
+    const nextPid=ss?.nextPlayerToAsk;
+    const np=players[nextPid]||{name:'?'};
+    if(iAmRespondingS){
+      document.getElementById('turn-desc').textContent=`あなたのクリューで(${ss.col},${ss.row})は生息地ですか？`;
+      const myClue=gs.clues?.[myPlayerId];
+      const canBe=myClue&&mapCache?clueMatchesHex(myClue,mapCache,ss.col,ss.row):false;
+      const yb=mkBtn('生息地かもしれない（ディスク）','green',()=>submitSearchResponse(true,ss));
+      const nb=mkBtn('生息地でない（キューブ）','red',()=>submitSearchResponse(false,ss));
+      document.getElementById('turn-desc').textContent+=`（クリューでは: ${canBe?'可能':'不可能'}）`;
+      btns.appendChild(yb);btns.appendChild(nb);
+    } else {
+      document.getElementById('turn-desc').textContent=`${np.name}に確認中...`;
+    }
+  } else if(gs.phase==='must_place_cube'){
+    if(isMyTurn){
+      document.getElementById('turn-desc').textContent='キューブを置いてください（生息地でないマスを選択）';
+      const b=mkBtn('マップをクリック','','');b.disabled=true;btns.appendChild(b);
+    } else {
+      document.getElementById('turn-desc').textContent=`${cp.name}がキューブを配置中...`;
+    }
+  }
+}
+
+function mkBtn(label,style,onclick){
+  const b=document.createElement('button');
+  b.className='btn btn-sm'+(style?` btn-${style}`:'');
+  b.textContent=label;
+  if(onclick) b.addEventListener('click',onclick);
+  return b;
+}
+
+// ─── Canvas ───
+function initCanvas(){
+  canvas=document.getElementById('hex-canvas');
+  const wrap=canvas.parentElement;
+  canvasW=wrap.clientWidth;canvasH=wrap.clientHeight;
+  canvas.width=canvasW;canvas.height=canvasH;
+  ctx=canvas.getContext('2d');
+  canvas.addEventListener('click',onCanvasClick);
+  canvas.addEventListener('mousemove',onCanvasHover);
+  canvas.addEventListener('mouseleave',()=>{hoveredHex=null;if(mapCache&&localState?.gameState)renderMap(localState.gameState);document.getElementById('tooltip').style.display='none';});
+  window.addEventListener('resize',()=>{
+    canvasW=wrap.clientWidth;canvasH=wrap.clientHeight;
+    canvas.width=canvasW;canvas.height=canvasH;
+    if(mapCache&&localState?.gameState)renderMap(localState.gameState);
+  });
+}
+function scaleHex(){
+  const fitW=canvasW/(COLS*1.5*HEX_R+HEX_R+14);
+  const fitH=canvasH/(ROWS*HEX_H+HEX_H+10);
+  return Math.min(fitW,fitH,1.4);
+}
+function hexToPixelScaled(col,row,scale){
+  const r=HEX_R*scale;const h=Math.sqrt(3)*r;
+  const x=r*1.5*col+r+10;
+  const y=h*row+(col%2===1?h/2:0)+h/2+8;
+  return{x,y,r,h};
+}
+
+function getHighlightedHex(gs){
+  if(!gs)return null;
+  if(gs.phase==='question_response'&&gs.questionState) return{col:gs.questionState.col,row:gs.questionState.row,type:'question'};
+  if(gs.phase==='search'&&gs.searchState) return{col:gs.searchState.col,row:gs.searchState.row,type:'search'};
+  return null;
+}
+
+function renderMap(gs){
+  if(!ctx||!mapCache)return;
+  ctx.clearRect(0,0,canvasW,canvasH);
+  const scale=scaleHex();
+  const hl=getHighlightedHex(gs);
+  // パルスアニメ用タイムスタンプ
+  const pulse=(Date.now()%1000)/1000;
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++) drawHex(c,r,gs,scale,hl,pulse);
+  // アニメ継続
+  if(hl) requestAnimationFrame(()=>{ if(mapCache&&localState?.gameState) renderMap(localState.gameState); });
+}
+function drawHex(col,row,gs,scale,hl,pulse){
+  const {x,y,r}=hexToPixelScaled(col,row,scale);
+  const cell=mapCache[col][row];
+  const corners=hexCorners(x,y,r-1);
+  const hov=hoveredHex&&hoveredHex.col===col&&hoveredHex.row===row;
+  const tokens=getTokensAt(gs,col,row);
+  const hasCube=tokens.some(t=>t.type==='cube');
+  const isHL=hl&&hl.col===col&&hl.row===row;
+
+  ctx.beginPath();ctx.moveTo(corners[0][0],corners[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(corners[i][0],corners[i][1]);ctx.closePath();
+  let baseColor=TERRAIN_COLORS[cell.terrain];
+  if(isHL) baseColor=lighten(baseColor,0.22);
+  else if(hov) baseColor=lighten(baseColor,0.18);
+  ctx.fillStyle=baseColor;
+  ctx.fill();
+
+  // ハイライト：半透明オーバーレイ
+  if(isHL){
+    ctx.beginPath();ctx.moveTo(corners[0][0],corners[0][1]);
+    for(let i=1;i<6;i++)ctx.lineTo(corners[i][0],corners[i][1]);ctx.closePath();
+    const alpha=0.15+0.12*Math.sin(pulse*Math.PI*2);
+    ctx.fillStyle=hl.type==='question'?`rgba(255,220,60,${alpha})`:`rgba(100,200,255,${alpha})`;
+    ctx.fill();
+  }
+
+  if(cell.animal){
+    const iconSize=Math.round(r*0.48);
+    ctx.font=`${iconSize}px serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(cell.animal==='bear'?'🐻':'🐱',x+r*0.38,y-r*0.38);
+  }
+  ctx.beginPath();ctx.moveTo(corners[0][0],corners[0][1]);for(let i=1;i<6;i++)ctx.lineTo(corners[i][0],corners[i][1]);ctx.closePath();
+  // ハイライト枠
+  if(isHL){
+    const glow=0.7+0.3*Math.sin(pulse*Math.PI*2);
+    ctx.strokeStyle=hl.type==='question'?`rgba(255,210,40,${glow})`:`rgba(80,180,255,${glow})`;
+    ctx.lineWidth=3;
+  } else {
+    ctx.strokeStyle=hov?'rgba(212,168,32,0.9)':'rgba(0,0,0,0.35)';ctx.lineWidth=hov?2:0.8;
+  }
+  ctx.stroke();
+
+  // ハイライトラベル（質問中 or サーチ中）
+  if(isHL){
+    const label=hl.type==='question'?'質問中':'サーチ中';
+    ctx.font=`bold ${Math.round(r*0.32)}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='bottom';
+    ctx.fillStyle=hl.type==='question'?'rgba(255,230,80,0.95)':'rgba(120,210,255,0.95)';
+    ctx.fillText(label,x,y-r*0.1);
+    ctx.textBaseline='alphabetic';
+  }
+
+  if(cell.structure){
+    const sc=STRUCT_COLORS_HEX[cell.structColor]||'#888';
+    ctx.fillStyle=sc;
+    const sr=r*0.28;
+    if(cell.structure==='stone'){
+      ctx.beginPath();for(let i=0;i<8;i++){const a=Math.PI/8+Math.PI/4*i;const px=x+sr*Math.cos(a),py=y+sr*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=0.5;ctx.stroke();
+    } else {
+      ctx.beginPath();ctx.moveTo(x,y-sr*1.2);ctx.lineTo(x+sr,y+sr*0.7);ctx.lineTo(x-sr,y+sr*0.7);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=0.5;ctx.stroke();
+    }
+  }
+
+  // tokens
+  const toks=tokens;const n=toks.length;
+  toks.forEach((tok,i)=>{
+    const angle=n>1?(i/n)*Math.PI*2:0;const tr=n>1?r*0.3:0;
+    const tx=x+tr*Math.cos(angle),ty=y+tr*Math.sin(angle);
+    const pc=getPlayerColor(gs,tok.playerIdx);const ts=r*0.19;
+    if(tok.type==='cube'){
+      ctx.fillStyle=pc;ctx.fillRect(tx-ts,ty-ts,ts*2,ts*2);
+      ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=0.6;ctx.strokeRect(tx-ts,ty-ts,ts*2,ts*2);
+    } else {
+      ctx.beginPath();ctx.arc(tx,ty,ts,0,Math.PI*2);ctx.fillStyle=pc;ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=0.7;ctx.stroke();
+    }
+  });
+}
+
+function getTokensAt(gs,col,row){
+  const key=getHexKey(col,row);
+  return gs.tokens?.[key]||[];
+}
+function getPlayerColor(gs,playerIdx){
+  if(!localState)return'#888';
+  const pid=gs.playerOrder?.[playerIdx];
+  const p=localState.players?.[pid];
+  return PLAYER_COLORS[p?.color??playerIdx]||PLAYER_COLORS[playerIdx]||'#888';
+}
+function lighten(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const r=Math.min(255,(n>>16)+Math.floor(amt*255));
+  const g=Math.min(255,((n>>8)&0xff)+Math.floor(amt*255));
+  const b=Math.min(255,(n&0xff)+Math.floor(amt*255));
+  return`rgb(${r},${g},${b})`;
+}
+
+// ─── Canvas interaction ───
+function onCanvasHover(e){
+  if(!mapCache||!localState?.gameState)return;
+  const rect=canvas.getBoundingClientRect();
+  const scale=scaleHex();
+  const px=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const py=(e.clientY-rect.top)*(canvas.height/rect.height);
+  // find nearest hex using scaled coords
+  let best=null,bestD=Infinity;
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    const {x,y,r:hr}=hexToPixelScaled(c,r,scale);
+    const d=(px-x)**2+(py-y)**2;
+    if(d<bestD){bestD=d;best={col:c,row:r,hr};}
+  }
+  const hex=(best&&bestD<(best.hr*1.3)**2)?best:null;
+  const prev=hoveredHex;
+  hoveredHex=hex;
+  if(JSON.stringify(prev)!==JSON.stringify(hex)) renderMap(localState.gameState);
+
+  const tt=document.getElementById('tooltip');
+  if(hex){
+    const cell=mapCache[hex.col][hex.row];
+    const tj=TERRAIN_JP[TERRAIN.indexOf(cell.terrain)]||cell.terrain;
+    let info=`(${hex.col},${hex.row}) ${tj}`;
+    if(cell.animal) info+=` [${cell.animal==='bear'?'クマ':'ピューマ'}]`;
+    if(cell.structure){const cn=STRUCT_COLORS_JP[cell.structColor];info+=` [${cn}${cell.structure==='stone'?'立石':'廃屋'}]`;}
+    tt.textContent=info;tt.style.display='block';
+    tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-28)+'px';
+  } else tt.style.display='none';
+}
+
+function onCanvasClick(e){
+  if(!mapCache||!localState?.gameState)return;
+  const gs=localState.gameState;
+  const rect=canvas.getBoundingClientRect();
+  const scale=scaleHex();
+  const px=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const py=(e.clientY-rect.top)*(canvas.height/rect.height);
+  let best=null,bestD=Infinity;
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    const {x,y,r:hr}=hexToPixelScaled(c,r,scale);
+    const d=(px-x)**2+(py-y)**2;if(d<bestD){bestD=d;best={col:c,row:r,hr};}
+  }
+  if(!best||bestD>=(best.hr*1.3)**2)return;
+  const {col,row}=best;
+  handleHexClick(col,row,gs);
+}
+
+function handleHexClick(col,row,gs){
+  const currentPid=gs.playerOrder?.[gs.currentPlayerIdx];
+  const isMyTurn=currentPid===myPlayerId;
+  const hasCb=getTokensAt(gs,col,row).some(t=>t.type==='cube');
+  if(hasCb&&gs.phase!=='must_place_cube'){showToast('キューブのあるマスは選択できません');return;}
+
+  if(gs.phase==='initial'&&isMyTurn){
+    const myClue=gs.clues?.[myPlayerId];
+    if(!myClue)return;
+    if(clueMatchesHex(myClue,mapCache,col,row)){showToast('そのマスはあなたのクリューで生息地かもしれません。生息地でないマスを選択してください。');return;}
+    if(hasCb||hasMyTokenAt(gs,col,row)){showToast('すでにトークンが置かれています');return;}
+    submitInitialCube(col,row,gs);
+    return;
+  }
+  if(gs.phase==='must_place_cube'&&isMyTurn){
+    const myClue=gs.clues?.[myPlayerId];
+    if(myClue&&clueMatchesHex(myClue,mapCache,col,row)){showToast('生息地かもしれないマスにはキューブを置けません');return;}
+    if(hasCb||hasMyTokenAt(gs,col,row)){showToast('すでにトークンが置かれています');return;}
+    submitMustCube(col,row,gs);
+    return;
+  }
+  if(gs.phase==='turn'&&isMyTurn){
+    if(!actionMode){showToast('まずアクションを選択してください');return;}
+    if(hasCb){showToast('キューブのあるマスは選択できません');return;}
+    if(actionMode==='question'){
+      showQuestionPlayerModal(col,row,gs);
+    } else if(actionMode==='search'){
+      const myClue=gs.clues?.[myPlayerId];
+      if(myClue&&!clueMatchesHex(myClue,mapCache,col,row)){showToast('自分のクリューではこのマスは生息地になりません。別のマスを選択してください。');return;}
+      submitSearch(col,row,gs);
+    }
+  }
+}
+function hasMyTokenAt(gs,col,row){
+  const toks=getTokensAt(gs,col,row);
+  return toks.some(t=>t.playerIdx===myPlayerIndex);
+}
+
+// ─── Game actions → Firebase ───
+async function submitInitialCube(col,row,gs){
+  const key=getHexKey(col,row);
+  const existing=gs.tokens?.[key]||[];
+  const newToks=[...existing,{playerIdx:myPlayerIndex,type:'cube'}];
+  const updates={[`gameState/tokens/${key}`]:newToks};
+  const newLeft=(gs.initialCubesLeft?.[myPlayerId]||0)-1;
+  updates[`gameState/initialCubesLeft/${myPlayerId}`]=newLeft;
+
+  // advance turn
+  const allZero=Object.entries({...gs.initialCubesLeft,[myPlayerId]:newLeft}).every(([,v])=>v<=0);
+  const nextIdx=(gs.currentPlayerIdx+1)%gs.playerOrder.length;
+  const logEntry=`${localState.players?.[myPlayerId]?.name||'?'} が(${col},${row})にキューブを置いた`;
+  const newLog=[logEntry,...(gs.log||[])].slice(0,40);
+
+  if(allZero){
+    updates['gameState/phase']='turn';
+    updates['gameState/currentPlayerIdx']=0;
+    newLog.unshift('初期配置完了！ゲーム開始！');
+  } else if(newLeft<=0){
+    // find next player who still has cubes
+    let nextPlayer=nextIdx;
+    const updatedLeft={...gs.initialCubesLeft,[myPlayerId]:0};
+    while(updatedLeft[gs.playerOrder[nextPlayer]]<=0&&nextPlayer!==gs.currentPlayerIdx){
+      nextPlayer=(nextPlayer+1)%gs.playerOrder.length;
+    }
+    updates['gameState/currentPlayerIdx']=nextPlayer;
+  }
+  updates['gameState/log']=newLog;
+  await update(ref(db,roomPath(roomCode)),updates);
+}
+
+function showQuestionPlayerModal(col,row,gs){
+  const others=gs.playerOrder.filter(pid=>pid!==myPlayerId);
+  const cell=mapCache[col][row];
+  const tj=TERRAIN_JP[TERRAIN.indexOf(cell.terrain)];
+  let html=`<h2>質問するプレイヤーを選択</h2>
+    <p>(${col},${row}) [${tj}] について誰に質問しますか？</p>
+    <div class="q-player-list">`;
+  for(const pid of others){
+    const p=localState.players?.[pid]||{name:'?',color:0};
+    const color=PLAYER_COLORS[p.color]||'#888';
+    html+=`<button class="qp-btn" onclick="window._askPlayer('${pid}',${col},${row})">
+      <div class="qp-dot" style="background:${color}"></div>${p.name}</button>`;
+  }
+  html+=`</div><div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-sm" onclick="closeModal()">キャンセル</button></div>`;
+  showModal(html);
+  window._askPlayer=async(targetPid,c,r)=>{
+    closeModal();actionMode=null;
+    const updates={
+      'gameState/phase':'question_response',
+      'gameState/questionState':{col:c,row:r,askingPlayer:myPlayerId,targetPlayer:targetPid},
+      'gameState/log':[`${localState.players?.[myPlayerId]?.name||'?'} が(${c},${r})について${localState.players?.[targetPid]?.name||'?'}に質問`,...(localState.gameState?.log||[])].slice(0,40)
+    };
+    await update(ref(db,roomPath(roomCode)),updates);
+  };
+}
+
+async function submitQuestionResponse(canBe,qs){
+  const gs=localState.gameState;
+  const key=getHexKey(qs.col,qs.row);
+  const existing=gs.tokens?.[key]||[];
+  const myAlready=existing.some(t=>t.playerIdx===myPlayerIndex);
+  const updates={};
+  const logEntry=`${localState.players?.[myPlayerId]?.name||'?'} が(${qs.col},${qs.row})に${canBe?'ディスク':'キューブ'}を置いた`;
+  const newLog=[logEntry,...(gs.log||[])].slice(0,40);
+
+  if(!myAlready){
+    updates[`gameState/tokens/${key}`]=[...existing,{playerIdx:myPlayerIndex,type:canBe?'disc':'cube'}];
+  }
+  if(!canBe){
+    // asker must place cube
+    updates['gameState/phase']='must_place_cube';
+    updates['gameState/currentPlayerIdx']=gs.playerOrder.indexOf(qs.askingPlayer);
+    newLog.unshift(`${localState.players?.[qs.askingPlayer]?.name||'?'} もキューブを置く必要があります`);
+  } else {
+    // move to next player
+    const nextIdx=(gs.currentPlayerIdx+1)%gs.playerOrder.length;
+    updates['gameState/phase']='turn';
+    updates['gameState/currentPlayerIdx']=nextIdx;
+    updates['gameState/questionState']=null;
+  }
+  updates['gameState/log']=newLog;
+  await update(ref(db,roomPath(roomCode)),updates);
+}
+
+async function submitSearch(col,row,gs){
+  const key=getHexKey(col,row);
+  const existing=gs.tokens?.[key]||[];
+  const myAlready=existing.some(t=>t.playerIdx===myPlayerIndex);
+  const updates={};
+  if(!myAlready){
+    updates[`gameState/tokens/${key}`]=[...existing,{playerIdx:myPlayerIndex,type:'disc'}];
+  }
+  // build order: players after current
+  const order=[];
+  for(let i=1;i<gs.playerOrder.length;i++) order.push(gs.playerOrder[(gs.currentPlayerIdx+i)%gs.playerOrder.length]);
+  const ss={col,row,order,orderIdx:0,searcherPid:myPlayerId,get nextPlayerToAsk(){return this.order[this.orderIdx];}};
+  // firebase can't store getters, store plain
+  const ssPlain={col,row,order,orderIdx:0,searcherPid:myPlayerId,nextPlayerToAsk:order[0]};
+  updates['gameState/phase']='search';
+  updates['gameState/searchState']=ssPlain;
+  updates['gameState/log']=[`${localState.players?.[myPlayerId]?.name||'?'} が(${col},${row})をサーチ！`,...(gs.log||[])].slice(0,40);
+  actionMode=null;
+  await update(ref(db,roomPath(roomCode)),updates);
+}
+
+async function submitSearchResponse(canBe,ss){
+  const gs=localState.gameState;
+  const key=getHexKey(ss.col,ss.row);
+  const existing=gs.tokens?.[key]||[];
+  const myAlready=existing.some(t=>t.playerIdx===myPlayerIndex);
+  const updates={};
+  const logEntry=`${localState.players?.[myPlayerId]?.name||'?'} が(${ss.col},${ss.row})に${canBe?'ディスク':'キューブ'}`;
+  const newLog=[logEntry,...(gs.log||[])].slice(0,40);
+
+  if(!myAlready){
+    updates[`gameState/tokens/${key}`]=[...existing,{playerIdx:myPlayerIndex,type:canBe?'disc':'cube'}];
+  }
+  if(!canBe){
+    // search fails, searcher places cube
+    const searcherIdx=gs.playerOrder.indexOf(ss.searcherPid);
+    updates['gameState/phase']='must_place_cube';
+    updates['gameState/currentPlayerIdx']=searcherIdx;
+    updates['gameState/searchState']=null;
+    newLog.unshift('サーチ失敗！サーチャーはキューブを置く必要があります');
+  } else {
+    const nextOrderIdx=(ss.orderIdx||0)+1;
+    if(nextOrderIdx>=ss.order.length){
+      // all agreed → WIN
+      const searcherIdx=gs.playerOrder.indexOf(ss.searcherPid);
+      updates['gameState/winner']=ss.searcherPid;
+      updates['gameState/winnerIdx']=searcherIdx;
+      updates['gameState/phase']='win';
+      newLog.unshift(`🎉 ${localState.players?.[ss.searcherPid]?.name||'?'} がクリプティドを発見！`);
+    } else {
+      const nextPid=ss.order[nextOrderIdx];
+      updates['gameState/searchState']={...ss,orderIdx:nextOrderIdx,nextPlayerToAsk:nextPid};
+    }
+  }
+  updates['gameState/log']=newLog;
+  await update(ref(db,roomPath(roomCode)),updates);
+}
+
+async function submitMustCube(col,row,gs){
+  const key=getHexKey(col,row);
+  const existing=gs.tokens?.[key]||[];
+  const updates={[`gameState/tokens/${key}`]:[...existing,{playerIdx:myPlayerIndex,type:'cube'}]};
+  const currentPid=gs.playerOrder[gs.currentPlayerIdx];
+  const nextIdx=(gs.playerOrder.indexOf(currentPid)+1)%gs.playerOrder.length;
+  // figure out whose turn was originally next
+  const origNextIdx=(gs.questionState?.askingPlayerOriginalNextIdx!==undefined)
+    ?gs.questionState.askingPlayerOriginalNextIdx
+    :nextIdx;
+  updates['gameState/phase']='turn';
+  updates['gameState/currentPlayerIdx']=origNextIdx;
+  updates['gameState/questionState']=null;
+  updates['gameState/log']=[`${localState.players?.[myPlayerId]?.name||'?'} が(${col},${row})にキューブを置いた`,...(gs.log||[])].slice(0,40);
+  await update(ref(db,roomPath(roomCode)),updates);
+}
+
+function renderLog(log,players){
+  const el=document.getElementById('game-log');
+  el.innerHTML=log.slice(0,20).map(entry=>`<div class="log-line">${entry}</div>`).join('');
+}
+
+function showWin(gs,players){
+  if(!document.getElementById('win-screen').classList.contains('active'))showScreen('win-screen');
+  const wPid=gs.winner;const wp=players[wPid]||{name:'?'};
+  document.getElementById('win-msg').textContent=`${wp.name} がクリプティドの生息地を発見しました！`;
+  const reveal=document.getElementById('clue-reveal');
+  reveal.innerHTML='';
+  (gs.playerOrder||[]).forEach((pid,i)=>{
+    const p=players[pid]||{name:'?',color:i};
+    const color=PLAYER_COLORS[p.color]||PLAYER_COLORS[i]||'#888';
+    const clue=gs.clues?.[pid];
+    const item=document.createElement('div');item.className='clue-reveal-item';
+    item.style.borderLeftColor=color;
+    item.innerHTML=`<div class="cri-name" style="color:${color}">${p.name}のクリュー</div>
+      <div class="cri-text">${clue?clueDesc(clue):'不明'}</div>`;
+    reveal.appendChild(item);
+  });
+}
+
+function showToast(msg){
+  const el=document.getElementById('tooltip');
+  el.textContent=msg;el.style.display='block';
+  el.style.left='50%';el.style.top='80px';el.style.transform='translateX(-50%)';
+  clearTimeout(el._tid);el._tid=setTimeout(()=>{el.style.display='none';el.style.transform='';},2500);
+}
+
+window.toggleClue=function(){
+  clueBlurred=!clueBlurred;
+  document.getElementById('my-clue-text').classList.toggle('clue-blurred',clueBlurred);
+  document.getElementById('clue-toggle-btn').textContent=clueBlurred?'表示':'非表示';
+};
+window.goLobby=function(){
+  unsubscribe();roomCode=null;isHost=false;mapCache=null;localState=null;
+  showScreen('lobby');
+};
+</script>
+</body>
+</html>
