@@ -166,7 +166,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Crimso
   <div class="lobby-box">
     <div class="lobby-title">
       <h1>CRYPTID</h1>
-      <p>(大串)ゆうまを最初に発見した者が勝利する</p>
+      <p>UMAを最初に発見した者が勝利する</p>
     </div>
 
     <div id="lobby-notice"></div>
@@ -1205,7 +1205,7 @@ async function submitSearchResponse(canBe,ss){
       updates['gameState/winner']=ss.searcherPid;
       updates['gameState/winnerIdx']=searcherIdx;
       updates['gameState/phase']='win';
-      newLog.unshift(`🎉 ${localState.players?.[ss.searcherPid]?.name||'?'} が(大串)ゆうまを発見！`);
+      newLog.unshift(`🎉 ${localState.players?.[ss.searcherPid]?.name||'?'} がUMAを発見！`);
     } else {
       const nextPid=ss.order[nextOrderIdx];
       updates['gameState/searchState']={...ss,orderIdx:nextOrderIdx,nextPlayerToAsk:nextPid};
@@ -1240,7 +1240,7 @@ function renderLog(log,players){
 function showWin(gs,players){
   if(!document.getElementById('win-screen').classList.contains('active'))showScreen('win-screen');
   const wPid=gs.winner;const wp=players[wPid]||{name:'?'};
-  document.getElementById('win-msg').textContent=`${wp.name} が(大串)ゆうまの生息地を発見しました！`;
+  document.getElementById('win-msg').textContent=`${wp.name} がUMAの生息地を発見しました！`;
   const reveal=document.getElementById('clue-reveal');
   reveal.innerHTML='';
   (gs.playerOrder||[]).forEach((pid,i)=>{
